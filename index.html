@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GameInfo – Zoek alle games</title>
+  <meta name="description" content="Zoek info over elke game: platforms, multiplayer, prijzen en download links." />
+  <meta name="theme-color" content="#0f0f0f" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+
+  <!-- Open Graph -->
+  <meta property="og:title" content="GameInfo" />
+  <meta property="og:description" content="Alle info over elke game op één plek." />
+  <meta property="og:type" content="website" />
+
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+
+  <header class="site-header">
+    <div class="logo">🎮 GameInfo</div>
+    <p class="tagline">Zoek een game en zie alles: platforms, multiplayer, prijs en waar je het kan downloaden.</p>
+  </header>
+
+  <main class="container">
+    <div class="search-wrap">
+      <input id="searchInput" type="text" placeholder="Bijv. Fortnite, Minecraft, GTA 6…" autocomplete="off" />
+      <button id="searchBtn" onclick="zoekGame()">Zoeken</button>
+    </div>
+
+    <div class="suggestions">
+      <span class="suggest-label">Populair:</span>
+      <button class="pill" onclick="zoekDirect('Fortnite')">Fortnite</button>
+      <button class="pill" onclick="zoekDirect('Minecraft')">Minecraft</button>
+      <button class="pill" onclick="zoekDirect('GTA 6')">GTA 6</button>
+      <button class="pill" onclick="zoekDirect('Valorant')">Valorant</button>
+      <button class="pill" onclick="zoekDirect('Call of Duty Warzone')">Warzone</button>
+      <button class="pill" onclick="zoekDirect('Roblox')">Roblox</button>
+      <button class="pill" onclick="zoekDirect('FIFA 25')">FIFA 25</button>
+      <button class="pill" onclick="zoekDirect('Apex Legends')">Apex Legends</button>
+    </div>
+
+    <div class="loading" id="loading">
+      <div class="spinner"></div>
+      <span>Game info ophalen…</span>
+    </div>
+
+    <div id="result"></div>
+  </main>
+
+  <footer class="site-footer">
+    <p>GameInfo – Aangedreven door AI &nbsp;·&nbsp; <span id="install-wrap" style="display:none"><button id="installBtn" class="install-btn">📲 Installeer app</button></span></p>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>
