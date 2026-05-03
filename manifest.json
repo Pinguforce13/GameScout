@@ -1,0 +1,39 @@
+{
+  "name": "GameInfo – Zoek alle games",
+  "short_name": "GameInfo",
+  "description": "Zoek info over elke game: platforms, multiplayer, prijzen en download links.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#0f0f0f",
+  "theme_color": "#0f0f0f",
+  "orientation": "portrait-primary",
+  "lang": "nl",
+  "categories": ["games", "entertainment", "utilities"],
+  "icons": [
+    {
+      "src": "icons/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icons/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "screenshots": [],
+  "shortcuts": [
+    {
+      "name": "Zoek Fortnite",
+      "short_name": "Fortnite",
+      "url": "/?q=Fortnite"
+    },
+    {
+      "name": "Zoek Minecraft",
+      "short_name": "Minecraft",
+      "url": "/?q=Minecraft"
+    }
+  ]
+}
