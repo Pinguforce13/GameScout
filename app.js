@@ -6,7 +6,7 @@
    Gratis key ophalen op https://rawg.io/apidocs
    ===================================================== */
 
-const RAWG_KEY = 'JOUW_API_SLEUTEL_HIER'; // <-- vervang dit!
+const RAWG_KEY = '7bd3a73e110f4cc8887fe5c804dc40bf';
 const RAWG_BASE = 'https://api.rawg.io/api';
 
 // Store naam → URL mapping
