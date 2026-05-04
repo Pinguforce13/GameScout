@@ -1,11 +1,11 @@
 {
-  "name": "GameInfo – Zoek alle games",
-  "short_name": "GameInfo",
-  "description": "Zoek info over elke game: platforms, multiplayer, prijzen en download links.",
+  "name": "QuestLog – Game Info",
+  "short_name": "QuestLog",
+  "description": "Zoek info over elke game: platforms, multiplayer, prijs en download links.",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#0f0f0f",
-  "theme_color": "#0f0f0f",
+  "background_color": "#0a0a0f",
+  "theme_color": "#0a0a0f",
   "orientation": "portrait-primary",
   "lang": "nl",
   "categories": ["games", "entertainment", "utilities"],
@@ -23,7 +23,6 @@
       "purpose": "any maskable"
     }
   ],
-  "screenshots": [],
   "shortcuts": [
     {
       "name": "Zoek Fortnite",
