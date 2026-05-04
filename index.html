@@ -3,56 +3,67 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>GameInfo – Zoek alle games</title>
-  <meta name="description" content="Zoek info over elke game: platforms, multiplayer, prijzen en download links." />
-  <meta name="theme-color" content="#0f0f0f" />
-
-  <!-- PWA -->
+  <title>QuestLog – Game Info</title>
+  <meta name="description" content="Zoek info over elke game: platforms, multiplayer, prijs en download links." />
+  <meta name="theme-color" content="#0a0a0f" />
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
-
-  <!-- Open Graph -->
-  <meta property="og:title" content="GameInfo" />
-  <meta property="og:description" content="Alle info over elke game op één plek." />
-  <meta property="og:type" content="website" />
-
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Syne:wght@700;800&family=DM+Sans:wght@400;500;600&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="style.css" />
 </head>
 <body>
 
+  <div class="bg-grid"></div>
+  <div class="bg-glow"></div>
+
   <header class="site-header">
-    <div class="logo">🎮 GameInfo</div>
-    <p class="tagline">Zoek een game en zie alles: platforms, multiplayer, prijs en waar je het kan downloaden.</p>
+    <div class="logo">
+      <span class="logo-icon">⚔️</span>
+      <span class="logo-text">QuestLog</span>
+    </div>
+    <p class="tagline">Zoek een game. Vind alles.</p>
   </header>
 
   <main class="container">
-    <div class="search-wrap">
-      <input id="searchInput" type="text" placeholder="Bijv. Fortnite, Minecraft, GTA 6…" autocomplete="off" />
-      <button id="searchBtn" onclick="zoekGame()">Zoeken</button>
-    </div>
 
-    <div class="suggestions">
-      <span class="suggest-label">Populair:</span>
-      <button class="pill" onclick="zoekDirect('Fortnite')">Fortnite</button>
-      <button class="pill" onclick="zoekDirect('Minecraft')">Minecraft</button>
-      <button class="pill" onclick="zoekDirect('GTA 6')">GTA 6</button>
-      <button class="pill" onclick="zoekDirect('Valorant')">Valorant</button>
-      <button class="pill" onclick="zoekDirect('Call of Duty Warzone')">Warzone</button>
-      <button class="pill" onclick="zoekDirect('Roblox')">Roblox</button>
-      <button class="pill" onclick="zoekDirect('FIFA 25')">FIFA 25</button>
-      <button class="pill" onclick="zoekDirect('Apex Legends')">Apex Legends</button>
+    <div class="search-section">
+      <div class="search-wrap">
+        <span class="search-icon">🔍</span>
+        <input id="searchInput" type="text" placeholder="Typ een game naam…" autocomplete="off" spellcheck="false" />
+        <button id="searchBtn" onclick="zoekGame()">
+          <span class="btn-text">Zoeken</span>
+          <span class="btn-arrow">→</span>
+        </button>
+      </div>
+
+      <div class="suggestions">
+        <button class="pill" onclick="zoekDirect('Fortnite')">Fortnite</button>
+        <button class="pill" onclick="zoekDirect('Minecraft')">Minecraft</button>
+        <button class="pill" onclick="zoekDirect('GTA 5')">GTA 5</button>
+        <button class="pill" onclick="zoekDirect('Valorant')">Valorant</button>
+        <button class="pill" onclick="zoekDirect('Warzone')">Warzone</button>
+        <button class="pill" onclick="zoekDirect('Roblox')">Roblox</button>
+        <button class="pill" onclick="zoekDirect('Apex Legends')">Apex Legends</button>
+        <button class="pill" onclick="zoekDirect('FIFA 25')">FIFA 25</button>
+      </div>
     </div>
 
     <div class="loading" id="loading">
-      <div class="spinner"></div>
-      <span>Game info ophalen…</span>
+      <div class="loading-bar"><div class="loading-fill"></div></div>
+      <span>Game opzoeken…</span>
     </div>
 
     <div id="result"></div>
+
   </main>
 
   <footer class="site-footer">
-    <p>GameInfo – Aangedreven door AI &nbsp;·&nbsp; <span id="install-wrap" style="display:none"><button id="installBtn" class="install-btn">📲 Installeer app</button></span></p>
+    <span>Data door <a href="https://rawg.io" target="_blank" rel="noopener">RAWG</a></span>
+    <span id="install-wrap" style="display:none">
+      <button id="installBtn" class="install-btn">📲 Installeer app</button>
+    </span>
   </footer>
 
   <script src="app.js"></script>
