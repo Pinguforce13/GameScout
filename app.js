@@ -1,12 +1,42 @@
-/* ===================================================
-   GameInfo – app.js
-   Aangedreven door de Anthropic API (claude-sonnet-4)
-   =================================================== */
+/* =====================================================
+   QuestLog – app.js
+   Aangedreven door de RAWG Video Games Database API
+   
+   ⚠️  VUL HIERONDER JE API SLEUTEL IN:
+   Gratis key ophalen op https://rawg.io/apidocs
+   ===================================================== */
 
-const ANTHROPIC_API_URL = 'https://api.anthropic.com/v1/messages';
-const MODEL = 'claude-sonnet-4-20250514';
+const RAWG_KEY = 'JOUW_API_SLEUTEL_HIER'; // <-- vervang dit!
+const RAWG_BASE = 'https://api.rawg.io/api';
 
-// ── DOM refs ──────────────────────────────────────────
+// Store naam → URL mapping
+const STORE_URLS = {
+  'steam':              'https://store.steampowered.com',
+  'playstation-store':  'https://store.playstation.com',
+  'xbox-store':         'https://www.xbox.com/nl-BE/games/store',
+  'xbox360':            'https://www.xbox.com/nl-BE/games/store',
+  'apple-appstore':     'https://apps.apple.com',
+  'google-play':        'https://play.google.com/store/games',
+  'nintendo':           'https://www.nintendo.com/nl-NL/store',
+  'gog':                'https://www.gog.com',
+  'epic-games':         'https://store.epicgames.com',
+  'itch-io':            'https://itch.io',
+};
+
+const STORE_NAMES = {
+  'steam':              'Steam',
+  'playstation-store':  'PlayStation Store',
+  'xbox-store':         'Xbox Store',
+  'xbox360':            'Xbox Store',
+  'apple-appstore':     'Apple App Store',
+  'google-play':        'Google Play',
+  'nintendo':           'Nintendo eShop',
+  'gog':                'GOG.com',
+  'epic-games':         'Epic Games Store',
+  'itch-io':            'itch.io',
+};
+
+// DOM refs
 const inp     = document.getElementById('searchInput');
 const btn     = document.getElementById('searchBtn');
 const loading = document.getElementById('loading');
@@ -14,12 +44,12 @@ const result  = document.getElementById('result');
 
 inp.addEventListener('keydown', e => { if (e.key === 'Enter') zoekGame(); });
 
-// ── Zoek helpers ──────────────────────────────────────
 function zoekDirect(naam) {
   inp.value = naam;
   zoekGame();
 }
 
+// ── Hoofd zoekfunctie ─────────────────────────────────
 async function zoekGame() {
   const naam = inp.value.trim();
   if (!naam) return;
@@ -30,61 +60,38 @@ async function zoekGame() {
   result.innerHTML      = '';
 
   try {
-    const resp = await fetch(ANTHROPIC_API_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        model: MODEL,
-        max_tokens: 1000,
-        system: `Je bent een game-informatie assistent. Geef ALTIJD een geldig JSON object terug, NIETS anders. Geen uitleg, geen markdown backticks, puur JSON.
+    // 1. Zoek game op naam
+    const zoekResp = await fetch(
+      `${RAWG_BASE}/games?key=${RAWG_KEY}&search=${encodeURIComponent(naam)}&page_size=1&search_exact=false`
+    );
+    if (!zoekResp.ok) throw new Error(`API fout: ${zoekResp.status}`);
+    const zoekData = await zoekResp.json();
 
-Formaat:
-{
-  "gevonden": true,
-  "naam": "exacte game naam",
-  "emoji": "één passende emoji",
-  "genre": "genre(s) bijv. Battle Royale, RPG, FPS",
-  "beschrijving": "2 duidelijke zinnen over de game in het Nederlands",
-  "platforms": ["PC", "PS5", "Xbox Series X", "Nintendo Switch", "iOS", "Android"],
-  "multiplayer": "Online multiplayer" of "Lokale co-op" of "Solo" of "Online + Lokaal" etc,
-  "gratis": true of false,
-  "prijs": "Gratis" of "±€X" of "€X/maand (abonnement)",
-  "leeftijd": "PEGI 3" of "PEGI 7" of "PEGI 12" of "PEGI 16" of "PEGI 18",
-  "developer": "naam van de studio",
-  "uitgegeven": "jaar",
-  "downloads": [
-    { "naam": "Steam", "url": "https://store.steampowered.com/app/..." },
-    { "naam": "Epic Games Store", "url": "https://store.epicgames.com/..." },
-    { "naam": "PlayStation Store", "url": "https://store.playstation.com/..." },
-    { "naam": "Xbox Store", "url": "https://www.xbox.com/..." },
-    { "naam": "Nintendo eShop", "url": "https://www.nintendo.com/..." }
-  ]
-}
-
-Geef alleen de platforms en download-links mee die echt van toepassing zijn.
-Als de game niet bestaat of echt onbekend is: { "gevonden": false, "naam": "..." }`,
-        messages: [{ role: 'user', content: `Geef info over de game: "${naam}"` }]
-      })
-    });
-
-    if (!resp.ok) throw new Error(`API fout: ${resp.status}`);
-
-    const data = await resp.json();
-    const text = (data.content || []).map(b => b.text || '').join('');
-
-    let info;
-    try {
-      info = JSON.parse(text.replace(/```json|```/g, '').trim());
-    } catch {
-      info = { gevonden: false, naam };
+    if (!zoekData.results || zoekData.results.length === 0) {
+      toonNietGevonden(naam);
+      return;
     }
 
-    toonResultaat(info);
+    const game = zoekData.results[0];
+
+    // 2. Haal detail info op (voor beschrijving, stores, etc.)
+    const [detailResp, screenshotResp] = await Promise.all([
+      fetch(`${RAWG_BASE}/games/${game.id}?key=${RAWG_KEY}`),
+      fetch(`${RAWG_BASE}/games/${game.id}/screenshots?key=${RAWG_KEY}&page_size=5`)
+    ]);
+
+    const detail      = detailResp.ok      ? await detailResp.json()      : {};
+    const screenshots = screenshotResp.ok  ? await screenshotResp.json()  : { results: [] };
+
+    toonResultaat(game, detail, screenshots.results || []);
 
   } catch (err) {
     console.error(err);
     result.style.display = 'block';
-    result.innerHTML = `<div class="not-found">Er ging iets mis. Controleer je internetverbinding en probeer opnieuw.<br><small style="opacity:.5">${err.message}</small></div>`;
+    result.innerHTML = `<div class="not-found">
+      Er ging iets mis. Controleer je API sleutel in <code>app.js</code> en probeer opnieuw.<br>
+      <small style="opacity:.5;font-size:12px">${err.message}</small>
+    </div>`;
   }
 
   loading.style.display = 'none';
@@ -92,102 +99,200 @@ Als de game niet bestaat of echt onbekend is: { "gevonden": false, "naam": "..."
 }
 
 // ── Resultaat renderen ────────────────────────────────
-function toonResultaat(info) {
-  result.style.display = 'block';
-
-  if (!info.gevonden) {
-    result.innerHTML = `<div class="not-found">Geen info gevonden voor "<strong>${info.naam || 'onbekend'}</strong>".<br>Controleer de spelling of probeer een andere naam.</div>`;
-    return;
-  }
-
-  // Multiplayer badge kleur
-  const mpKleur = (info.multiplayer || '').toLowerCase().includes('online') ? 'green'
-    : (info.multiplayer || '').toLowerCase().includes('solo') ? 'blue'
-    : 'purple';
-
-  // Prijs badge kleur
-  const prijsKleur = info.gratis ? 'green' : 'amber';
+function toonResultaat(game, detail, screenshots) {
 
   // Platforms
-  const platformsHtml = (info.platforms || [])
-    .map(p => `<span class="platform-tag">${p}</span>`)
-    .join('') || '<span style="color:var(--text3);font-size:13px">Onbekend</span>';
+  const platforms = (game.platforms || [])
+    .map(p => p.platform.name)
+    .filter(Boolean);
 
-  // Download links
-  const linksHtml = (info.downloads || []).length
-    ? (info.downloads || []).map(d => `
-        <div class="link-row">
-          <span class="link-name">${d.naam}</span>
-          <a class="link-btn" href="${d.url}" target="_blank" rel="noopener">Bezoeken →</a>
-        </div>`).join('')
-    : '<p class="desc-text">Geen directe links beschikbaar.</p>';
+  // Genres
+  const genres = (game.genres || []).map(g => g.name).join(', ');
 
+  // Developers
+  const devs = (detail.developers || []).map(d => d.name).join(', ');
+
+  // Rating (RAWG rating is 0-5)
+  const rating    = game.rating ? game.rating.toFixed(1) : null;
+  const ratingPct = game.rating ? Math.round((game.rating / 5) * 100) : 0;
+
+  // ESRB / leeftijd
+  const esrb = game.esrb_rating ? game.esrb_rating.name : null;
+
+  // Stores
+  const stores = (detail.stores || []).map(s => {
+    const slug = s.store.slug;
+    return {
+      naam: STORE_NAMES[slug] || s.store.name,
+      url:  s.url || STORE_URLS[slug] || '#'
+    };
+  });
+
+  // Cover afbeelding
+  const coverImg = game.background_image;
+
+  // Beschrijving (plain text uit HTML)
+  const beschrijving = detail.description_raw
+    ? detail.description_raw.slice(0, 280).trim() + (detail.description_raw.length > 280 ? '…' : '')
+    : 'Geen beschrijving beschikbaar.';
+
+  // Multiplayer badge (via tags)
+  const tags   = (detail.tags || []).map(t => t.name.toLowerCase());
+  const isMulti = tags.some(t => ['multiplayer','co-op','online co-op','online multiplayer'].includes(t));
+  const isSolo  = tags.some(t => ['singleplayer','single-player'].includes(t));
+  const mpLabel = isMulti && isSolo ? 'Multiplayer + Solo'
+                : isMulti ? 'Multiplayer'
+                : isSolo  ? 'Solo'
+                : 'Onbekend';
+  const mpKleur = isMulti ? 'green' : isSolo ? 'blue' : 'purple';
+
+  // Gratis tag
+  const isGratis = tags.includes('free to play') || tags.includes('free-to-play');
+  const prijsLabel = isGratis ? 'Gratis' : 'Betaald';
+  const prijsKleur = isGratis ? 'accent' : 'amber';
+
+  // Screenshots HTML
+  const screenshotsHtml = screenshots.length
+    ? `<div class="section">
+        <div class="section-title">Screenshots</div>
+        <div class="screenshots">
+          ${screenshots.map(s => `
+            <div class="screenshot">
+              <img src="${s.image}" alt="screenshot" loading="lazy" />
+            </div>`).join('')}
+        </div>
+      </div>
+      <div class="divider"></div>`
+    : '';
+
+  // Stores HTML
+  const storesHtml = stores.length
+    ? stores.map(s => `
+        <a class="store-row" href="${s.url}" target="_blank" rel="noopener">
+          <span class="store-name">${s.naam}</span>
+          <span class="store-arrow">→</span>
+        </a>`).join('')
+    : '<p class="desc-text">Geen store links beschikbaar.</p>';
+
+  // Platforms HTML
+  const platformsHtml = platforms.length
+    ? platforms.map(p => `<span class="platform-tag">${p}</span>`).join('')
+    : '<span class="desc-text">Onbekend</span>';
+
+  result.style.display = 'block';
   result.innerHTML = `
     <div class="result-card">
 
-      <div class="game-header">
-        <div class="game-icon">${info.emoji || '🎮'}</div>
-        <div style="min-width:0">
-          <div class="game-title">${info.naam}</div>
-          <div class="game-meta">${[info.genre, info.developer, info.uitgegeven].filter(Boolean).join(' · ')}</div>
-          <div class="badges">
-            <span class="badge badge-${mpKleur}">${info.multiplayer || 'Onbekend'}</span>
-            <span class="badge badge-${prijsKleur}">${info.prijs || (info.gratis ? 'Gratis' : 'Betaald')}</span>
-            ${info.leeftijd ? `<span class="badge badge-blue">${info.leeftijd}</span>` : ''}
+      <div class="game-banner">
+        ${coverImg ? `<div class="game-banner-bg" style="background-image:url('${coverImg}')"></div>` : ''}
+        <div class="game-banner-content">
+          <div class="game-cover">
+            ${coverImg
+              ? `<img src="${coverImg}" alt="${game.name}" />`
+              : '🎮'}
+          </div>
+          <div class="game-info-main">
+            <div class="game-title">${game.name}</div>
+            <div class="game-sub">${[genres, devs, game.released ? game.released.slice(0,4) : ''].filter(Boolean).join(' · ')}</div>
+            <div class="badges">
+              <span class="badge badge-${mpKleur}">${mpLabel}</span>
+              <span class="badge badge-${prijsKleur}">${prijsLabel}</span>
+              ${esrb ? `<span class="badge badge-blue">${esrb}</span>` : ''}
+              ${rating ? `<span class="badge badge-purple">⭐ ${rating}/5</span>` : ''}
+            </div>
           </div>
         </div>
       </div>
 
-      <div class="section-title">Over de game</div>
-      <p class="desc-text">${info.beschrijving || ''}</p>
+      <div class="card-body">
 
-      <div class="divider"></div>
-
-      <div class="section-title">Beschikbaar op</div>
-      <div class="platforms-list">${platformsHtml}</div>
-
-      <div class="divider"></div>
-
-      <div class="section-title">Downloaden / Kopen</div>
-      <div class="links-list">${linksHtml}</div>
-
-      <div class="divider"></div>
-
-      <div class="info-grid">
-        <div class="info-card">
-          <div class="info-label">Multiplayer</div>
-          <div class="info-value">${info.multiplayer || '—'}</div>
+        <div class="section">
+          <div class="section-title">Over de game</div>
+          <p class="desc-text">${beschrijving}</p>
         </div>
-        <div class="info-card">
-          <div class="info-label">Prijs</div>
-          <div class="info-value">${info.prijs || '—'}</div>
+
+        <div class="divider"></div>
+
+        ${rating ? `
+        <div class="section">
+          <div class="section-title">Beoordeling</div>
+          <div class="rating-wrap">
+            <div class="rating-bar">
+              <div class="rating-fill" style="width:${ratingPct}%"></div>
+            </div>
+            <span class="rating-num">${rating} / 5</span>
+          </div>
         </div>
-        <div class="info-card">
-          <div class="info-label">PEGI leeftijd</div>
-          <div class="info-value">${info.leeftijd || '—'}</div>
+        <div class="divider"></div>` : ''}
+
+        <div class="section">
+          <div class="section-title">Beschikbaar op</div>
+          <div class="platforms-list">${platformsHtml}</div>
         </div>
-        <div class="info-card">
-          <div class="info-label">Uitgegeven</div>
-          <div class="info-value">${info.uitgegeven || '—'}</div>
+
+        <div class="divider"></div>
+
+        ${screenshotsHtml}
+
+        <div class="section">
+          <div class="section-title">Kopen / Downloaden</div>
+          <div class="stores-grid">${storesHtml}</div>
         </div>
+
+        <div class="divider"></div>
+
+        <div class="stats-grid">
+          <div class="stat-card">
+            <div class="stat-label">Multiplayer</div>
+            <div class="stat-value">${mpLabel}</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-label">Prijs</div>
+            <div class="stat-value">${prijsLabel}</div>
+          </div>
+          ${esrb ? `<div class="stat-card">
+            <div class="stat-label">Leeftijd</div>
+            <div class="stat-value">${esrb}</div>
+          </div>` : ''}
+          <div class="stat-card">
+            <div class="stat-label">Uitgebracht</div>
+            <div class="stat-value">${game.released ? game.released.slice(0,4) : '—'}</div>
+          </div>
+          ${game.playtime ? `<div class="stat-card">
+            <div class="stat-label">Gem. speeltijd</div>
+            <div class="stat-value">${game.playtime}u</div>
+          </div>` : ''}
+          ${detail.metacritic ? `<div class="stat-card">
+            <div class="stat-label">Metacritic</div>
+            <div class="stat-value">${detail.metacritic}/100</div>
+          </div>` : ''}
+        </div>
+
       </div>
-
     </div>
   `;
 
   result.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
 }
 
-// ── Service Worker registreren ────────────────────────
+function toonNietGevonden(naam) {
+  loading.style.display = 'none';
+  result.style.display = 'block';
+  result.innerHTML = `<div class="not-found">
+    Geen game gevonden voor "<strong>${naam}</strong>".<br>
+    Probeer een andere spelling of een Engelse naam.
+  </div>`;
+  btn.disabled = false;
+}
+
+// ── Service Worker ────────────────────────────────────
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js')
-      .then(reg => console.log('SW geregistreerd:', reg.scope))
-      .catch(err => console.warn('SW fout:', err));
+    navigator.serviceWorker.register('./sw.js').catch(() => {});
   });
 }
 
-// ── PWA Install prompt ────────────────────────────────
+// ── PWA Install ───────────────────────────────────────
 let deferredPrompt;
 
 window.addEventListener('beforeinstallprompt', e => {
@@ -203,9 +308,7 @@ document.addEventListener('DOMContentLoaded', () => {
       if (!deferredPrompt) return;
       deferredPrompt.prompt();
       const { outcome } = await deferredPrompt.userChoice;
-      if (outcome === 'accepted') {
-        document.getElementById('install-wrap').style.display = 'none';
-      }
+      if (outcome === 'accepted') document.getElementById('install-wrap').style.display = 'none';
       deferredPrompt = null;
     });
   }
